@@ -1,4 +1,5 @@
-const exp=require('express')
+const exp= require('express')
+const express =require('express')
 const app=exp()
 const bodyPars=require('body-parser')
 const cors=require('cors')
@@ -10,19 +11,19 @@ const list_route=require('./routes_controllers/list_route')
 const Auth=require('./routes_controllers/Auth')
 const Update_route=require("./routes_controllers/Update_route")
 
-
-mongo.connect('mongodb://localhost:27017/facerecognition').then(()=>{
-    console.log("mongo connected")
-})
 app.use(bodyPars.urlencoded({extended:true}))
 app.use(bodyPars.json())
-app.use(exp.json())
+app.use(express.json())
 app.use(cors(
     {
       origin: true,
       credentials: true
     }
 ))
+
+mongo.connect('mongodb://localhost:27017/facerecognition').then(()=>{
+    console.log("mongo connected")
+})
 
 app.use('/',RegStud)
 app.use('/',create_route)

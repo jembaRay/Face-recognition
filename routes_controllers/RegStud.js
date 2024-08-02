@@ -6,41 +6,52 @@ const Clas = require('../models/Clas');
 const canvas = require('canvas');
 const  axios = require('axios');
 const students = require('../models/students');
-const Clas = require('../models/Clas');
 const multer = require('multer');
 const { GridFsStorage } = require('multer-gridfs-storage');
+const path = require('path');
+const token=require('../Jwt/jwt');
+const { Console } = require('console');
 
-const storage = new GridFsStorage({
-    url: process.env.MONGO_URI || 'mongodb://localhost:27017/your-database-name',
-    file: (req, file) => {
-      return new Promise((resolve, reject) => {
-        const filename = file.originalname;
-        const fileInfo = {
-          filename: filename,
-          bucketName: 'uploads'
-        };
-        resolve(fileInfo);
-      });
-    }
-  });
- //const tf=require('@tensorflow/tfjs-node')
+// // Configure multer-gridfs-storage
+// const storage = new GridFsStorage({
+//     url: 'mongodb://localhost:27017/facerecognition',
+//     file: (req, file) => {
+//       return {
+//         bucketName: 'images',
+//         filename: `${Date.now()}${path.extname(file.originalname)}`
+//       };
+//     }
+//   });
+   //const tf=require('@tensorflow/tfjs-node')
 
-  // Create the Multer upload instance
-  const upload = multer({ storage: storage });
+
+// Create the upload middleware
+const upload = multer({ storage: multer.memoryStorage() });
   
 
 
 router.post('/create_student', upload.single('image'), async (req, res) => {
+    const tokene=req.headers.token
+    const PersoId= token.getUserId(tokene)
   console.log('image recieved');
-  const { file } = req;
-  const {First_name,Last_name,Email,Telephone,password,Class_name}=req.body
+  const {First_name,Last_name,Email,Telephone,password,Class_name,image}=req.body
+  console.log({First_name,Last_name,Email,Telephone,password,Class_name})
   try {
-    // Call the Python script via Flask server
-    const response = await axios.post('http://localhost:5000/recognize', {
-       file:file
-    });
+    if (!req.file) {
+        return res.status(400).json({ message: 'No image uploaded' });
+    }
+    const { buffer, originalname } = req.file;
+console.log(buffer);
+//     // Call the Python script via Flask server
+    
+    const response = await axios.post('http://localhost:5000/recognize_face', buffer, {
+        headers: {
+          'Content-Type': 'image/jpeg',
+        },
+      });
+   console.log(response.data.encodings);
     // Send the response back to the client
-    res.json(response.data);
+    //res.status(200).json(response.data);
 
    stud.findOne({$or:[{Email},{Telephone}]}).then((existing)=>{
       if (existing) {
@@ -52,7 +63,7 @@ router.post('/create_student', upload.single('image'), async (req, res) => {
          }
            return res.status(400).send({err:errorMessage})
             
-    } else {
+     } else {
           
        bcrypt.hash(password,6,(err,bcrypted)=>{
             if (err) {
@@ -68,25 +79,25 @@ router.post('/create_student', upload.single('image'), async (req, res) => {
                          Email, 
                          Telephone,
                          Password: bcrypted,
-                         descriptor:".....",
+                         PersoId,
+                         descriptor:response.data.encodings,
                       ClassId:clas.id
+                    }).then((student)=>{
+                        res.status(200).send({student})
                     })
                 })
          })
      }
-   }).catch((error)=>{
+   })
+   .catch((error)=>{
 
 
    })
    
    } catch (error) {
-     console.error(error);
+     //console.error(error);
      res.status(500).send('Error processing image');
-   } finally {
-    // Clean up the uploaded file
-     fs.unlinkSync(imagePath);
-  }
-
+   } 
 });
 
 

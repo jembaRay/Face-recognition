@@ -37,11 +37,16 @@ const student=new mongo.Schema({
         ref:'Class',
         required:true
     },
+    PersoId: {
+        type: mongo.Types.ObjectId,
+        ref: 'Personel',
+        required: true,
+      },
     RoleId:{
         type:mongo.Types.ObjectId,
         ref:'Roles',
         required:true,
-        default:''
+        default:"66acfa09948eae2459802065"
     },
     descriptor: { type: [Number], required: true, length: 128 },
 

@@ -9,7 +9,7 @@ const justif=new mongo.Schema({
     },
   file: {
     id: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongo.Schema.Types.ObjectId,
       required: true
     },
     filename: {

@@ -28,14 +28,16 @@ const Personel=new mongo.Schema({
         minlength:7,
         required:true
     },
-    absences:{
-        type:Number,
-        default:0
-    },
     RoleId:{
         type:mongo.Types.ObjectId,
         ref:'Roles',
-        required:true
-    }
+        required:true,
+        default:"66acfa54e59c57a442d8cd15"
+    }, 
+    // PersoId: {
+    //     type: mongo.Types.ObjectId,
+    //     ref: 'Personel',
+    //     required: true,
+    //   },
 },{timestamp:true})
 module.exports=mongo.model("Personel",Personel)

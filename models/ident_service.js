@@ -17,7 +17,7 @@ const ident_service=new mongoose.Schema({
         minlength:6
     },
     RoleId:{
-        type:mongo.Types.ObjectId,
+        type:mongoose.Types.ObjectId,
         ref:'Roles',
         required:true
     },
