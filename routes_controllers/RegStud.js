@@ -124,14 +124,17 @@ router.post('/Rollcall', upload.single('image'), async(req,res)=>{
                 }; 
         
                 // Make the axios.post request outside of the query
-                axios.post('http://localhost:7000/roll_call', payload, {
+                axios.post('http://localhost:7000/roll_call', payload, {     
                     // headers: {
-                    //     'Content-Type': 'image/jpeg'
-                    // }
+                    //     'Content-Type': 'image/jpeg' 
+                    // } 
                 })
                 .then(response => {
                     // Handle the response from the Flask endpoint
+                   
+                   // console.log(id);
                     res.send(response.data);
+                    
                 })
                 .catch(error => {
                     // Handle the error
@@ -151,29 +154,38 @@ router.post('/Rollcall', upload.single('image'), async(req,res)=>{
 })
 
 
-router.post("/identify",upload.single('image'),async (req,res)=>{
-    const {Classs}=req.body
+router.post("/identify",upload.single('image'),async(req,res)=>{
+    const {classs}=req.body
     if (!req.file) {
         return res.status(400).json({ message: 'No image uploaded' });
     }
     const { buffer, originalname } = req.file;
     
-    Class.findOne({Name:Classs}).then((found)=>{
-        students.findOne({ClassId:found.id}).then((stud)=>{
+    console.log("entered bitch");
+    Class.findOne({Name:classs}).then((found)=>{
+        //console.log(found);
+        students.find({ClassId:found.id}).then((stud)=>{
+            //console.log(stud);
             const storedEncodingsList = stud.map(enc =>({ id:enc.id,encodings:enc.descriptor}));
+            //console.log(storedEncodingsList);
             const payload={
                 buffer: buffer,
                 storedEncodings: storedEncodingsList
             }
 
-            axios.post('http://localhost:7000/identify', payload, {
+            axios.post('http://localhost:7000/identify_stud', payload, {
                 // headers: {
                 //     'Content-Type': 'image/jpeg'
                 // }
-            })
+            }) 
             .then(response => {
                 // Handle the response from the Flask endpoint
-                res.status(200).send(response.data);
+                //res.status(200).send(response.data[0].id);
+                students.findById(response.data[0].id).then((stud)=>{
+                    res.send(`the student present is ${stud.First_name} ${stud.Last_name}`)
+                }).catch((error)=>{
+                            res.status(405).send(error)
+                })
             })
         }).catch((error)=>{
             res.send(error)
