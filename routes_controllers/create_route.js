@@ -131,7 +131,7 @@ router.post('/createPersonel',(req,res)=>{
 router.post('/createClass',(req,res)=>{
     const tokene=req.headers.token
     const persoId= token.getUserId(tokene) 
-    console.log(persoId);
+    console.log(persoId); 
     const {Name}=req.body
   console.log(Name);
  clas.create({

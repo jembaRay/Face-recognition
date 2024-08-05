@@ -10,7 +10,8 @@ const multer = require('multer');
 const { GridFsStorage } = require('multer-gridfs-storage');
 const path = require('path');
 const token=require('../Jwt/jwt');
-const { Console } = require('console');
+const { Console, log } = require('console');
+const Class = require('../models/Clas');
 
 // // Configure multer-gridfs-storage
 // const storage = new GridFsStorage({
@@ -31,8 +32,8 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 
 router.post('/create_student', upload.single('image'), async (req, res) => {
-    const tokene=req.headers.token
-    const PersoId= token.getUserId(tokene)
+   // const tokene=req.headers.token
+    //const PersoId= token.getUserId(tokene)
   console.log('image recieved');
   const {First_name,Last_name,Email,Telephone,password,Class_name,image}=req.body
   console.log({First_name,Last_name,Email,Telephone,password,Class_name})
@@ -64,24 +65,25 @@ console.log(buffer);
            return res.status(400).send({err:errorMessage})
             
      } else {
-          
+           
        bcrypt.hash(password,6,(err,bcrypted)=>{
             if (err) {
                  res.status(500).send(err)
              }
-                Clas.find({Name:Class_name}).then((clas)=>{
-                     if(!clas){
+                Clas.findOne({Name:Class_name}).then((classs)=>{
+                     if(!classs){
                          res.status(300).json('no class as such')
                    }
+                   console.log(classs);
                      stud.create({
                         First_name,
                         Last_name,
                          Email, 
                          Telephone,
-                         Password: bcrypted,
-                         PersoId,
+                         password: bcrypted,
+                         PersoId:'66ad02d8ca96277b7a63e3b5',
                          descriptor:response.data.encodings,
-                      ClassId:clas.id
+                         ClassId:classs.id
                     }).then((student)=>{
                         res.status(200).send({student})
                     })
@@ -90,7 +92,7 @@ console.log(buffer);
      }
    })
    .catch((error)=>{
-
+    res.send(error)
 
    })
    
@@ -101,11 +103,95 @@ console.log(buffer);
 });
 
 
-router.get('/hello',(req,res)=>{
-res.send({"hey":'good end point'})
+router.post('/Rollcall', upload.single('image'), async(req,res)=>{
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'No image uploaded' });
+        }
+        const { buffer, originalname } = req.file;
+        const classs=req.body.class
+        
+        //console.log(buffer);
+        Clas.findOne({Name:classs}).then((found)=>{
+            students.find({ClassId:found.id}).then((students)=>{
+               // console.log(students);
+                const storedEncodingsList = students.map(enc =>({ id:enc.id,encodings:enc.descriptor}));
+                // Now, you can use the storedEncodingsList to construct the request payload
+                const payload = {
+                    //classs: classs,
+                    buffer: buffer,
+                    storedEncodings: storedEncodingsList
+                }; 
+        
+                // Make the axios.post request outside of the query
+                axios.post('http://localhost:7000/roll_call', payload, {
+                    // headers: {
+                    //     'Content-Type': 'image/jpeg'
+                    // }
+                })
+                .then(response => {
+                    // Handle the response from the Flask endpoint
+                    res.send(response.data);
+                })
+                .catch(error => {
+                    // Handle the error
+                    res.send(error);
+                });
+            }).catch((error)=>{
+                res.send(error) 
+            })
+        }).catch((error)=>{
+            res.send(error)
+        })
+      console.log(storedEncodingsList);
+
+    }catch{
+
+    }
 })
 
 
+router.post("/identify",upload.single('image'),async (req,res)=>{
+    const {Classs}=req.body
+    if (!req.file) {
+        return res.status(400).json({ message: 'No image uploaded' });
+    }
+    const { buffer, originalname } = req.file;
+    
+    Class.findOne({Name:Classs}).then((found)=>{
+        students.findOne({ClassId:found.id}).then((stud)=>{
+            const storedEncodingsList = stud.map(enc =>({ id:enc.id,encodings:enc.descriptor}));
+            const payload={
+                buffer: buffer,
+                storedEncodings: storedEncodingsList
+            }
+
+            axios.post('http://localhost:7000/identify', payload, {
+                // headers: {
+                //     'Content-Type': 'image/jpeg'
+                // }
+            })
+            .then(response => {
+                // Handle the response from the Flask endpoint
+                res.status(200).send(response.data);
+            })
+        }).catch((error)=>{
+            res.send(error)
+        })
+    }).catch((error)=>{
+        res.send(error)
+    })
+
+
+})
+async function sendrequest(classs,buffer){
+    const response =  axios.post('http://localhost:7000/compare', {"classs":classs,"buffer":buffer}, {
+        // headers: {
+        //     'Content-Type': 'image/jpeg'
+        // }
+        }
+      );
+}
 
 
 module.exports=router
