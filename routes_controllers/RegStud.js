@@ -44,9 +44,9 @@ router.post('/create_student', upload.single('image'), async (req, res) => {
     }
     const { buffer, originalname } = req.file;
 console.log(buffer);
-//     // Call the Python script via Flask server
+//     // Call the Python script via Flask server 
     
-    const response = await axios.post('http://localhost:5000/recognize_face', buffer, {
+    const response = await axios.post('http://localhost:7000/recognize_face', buffer, {
         headers: {
           'Content-Type': 'image/jpeg',
         },
@@ -115,7 +115,7 @@ router.post('/Rollcall', upload.single('image'), async(req,res)=>{
         //console.log(req.body);
         //console.log(buffer);
         const today = new Date().toISOString().slice(0, 10);
-
+        console.log(today);
         Clas.findOne({ Name: classs }).then((found) => {
         students.find({ ClassId: found.id }).then((students) => {
             const storedEncodingsList = students.map((enc) => ({
@@ -124,12 +124,14 @@ router.post('/Rollcall', upload.single('image'), async(req,res)=>{
             }));
 
             // Check if attendance status for today has been created
-            Attendance_status.findOne({ createdAt: today }).then((existingStatus) => {
+            Attendance_status.findOne({ date: today }).then((existingStatus) => {
+               // console.log({existingStatus});
             if (!existingStatus) {
                 // Create attendance status for all the students in the class for today
                 students.forEach((student) => {
                 Attendance_status.create({
                     studId: student.id,
+                    date:today
                 }).catch((err) => {
                     console.log(err);
                 });
@@ -143,7 +145,7 @@ router.post('/Rollcall', upload.single('image'), async(req,res)=>{
             storedEncodings: storedEncodingsList,
             };
 
-            axios
+            axios 
             .post("http://localhost:7000/roll_call", payload, {
                 // headers: {
                 //     'Content-Type': 'image/jpeg'
@@ -151,9 +153,13 @@ router.post('/Rollcall', upload.single('image'), async(req,res)=>{
             })
             .then((response) => {
                 const datas = response.data.present_encodings;
-
+                let responses = []
+                let resp
                 datas.forEach((e) => {
-                    Attendance_status.findOne({ studId: e.id, createdAt: today }).then((existingStatus) => {
+                    const todays = new Date().toISOString().slice(0, 10);
+                    //console.log(todays);
+                    Attendance_status.findOne({ studId: e.id, date: todays }).then((existingStatus) => {
+                        //console.log({"existingStatus":existingStatus});
                         if (period === "First_period") {
                         existingStatus.First_period = true;
                         } else if (period === "Second_period") {
@@ -165,22 +171,25 @@ router.post('/Rollcall', upload.single('image'), async(req,res)=>{
                         existingStatus
                         .save()
                         .then((att) => {
+                            //console.log(att);
                             // Do not send the response here
+                             responses.push([att])
+                             resp=responses
+                            console.log(resp);
+                           
                         })
                         .catch((err) => {
                             console.log(err);
                         });
-                    
+                        
+                        
                     });
                 });
-
+                res.status(200).send({"Good ":`rollcall for ${period} done`});
                 // Send the response after the loop
-                let responses = {
-                status: 200,
-                data: { Good: "Attendance succeeded" },
-                };
+               
 
-                res.status(responses.status).send(responses.data);
+                
             })
             .catch((error) => {
                 // Handle the error

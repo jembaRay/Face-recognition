@@ -19,6 +19,10 @@ const Attendance=new mong.Schema({
         required:true,
         ref:'students',
         unique:true
+    },
+    date:{
+        type:'string',
+        required:true
     }
 },{timestamps:true})
 module.exports=mong.model("Attendance",Attendance)
