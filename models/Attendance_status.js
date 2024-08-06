@@ -17,7 +17,8 @@ const Attendance=new mong.Schema({
     studId:{
         type:String,
         required:true,
-        ref:'students'
+        ref:'students',
+        unique:true
     }
-})
-module.export=mong.model("Attendance",Attendance)
+},{timestamps:true})
+module.exports=mong.model("Attendance",Attendance)

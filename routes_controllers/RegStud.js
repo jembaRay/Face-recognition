@@ -12,6 +12,7 @@ const path = require('path');
 const token=require('../Jwt/jwt');
 const { Console, log } = require('console');
 const Class = require('../models/Clas');
+const Attendance_status = require('../models/Attendance_status');
 
 // // Configure multer-gridfs-storage
 // const storage = new GridFsStorage({
@@ -109,43 +110,88 @@ router.post('/Rollcall', upload.single('image'), async(req,res)=>{
             return res.status(400).json({ message: 'No image uploaded' });
         }
         const { buffer, originalname } = req.file;
-        const classs=req.body.class
-        
+        const{ classs,period }=req.body
+
+        //console.log(req.body);
         //console.log(buffer);
-        Clas.findOne({Name:classs}).then((found)=>{
-            students.find({ClassId:found.id}).then((students)=>{
-               // console.log(students);
-                const storedEncodingsList = students.map(enc =>({ id:enc.id,encodings:enc.descriptor}));
-                // Now, you can use the storedEncodingsList to construct the request payload
-                const payload = {
-                    //classs: classs,
-                    buffer: buffer,
-                    storedEncodings: storedEncodingsList
-                }; 
-        
-                // Make the axios.post request outside of the query
-                axios.post('http://localhost:7000/roll_call', payload, {     
-                    // headers: {
-                    //     'Content-Type': 'image/jpeg' 
-                    // } 
-                })
-                .then(response => {
-                    // Handle the response from the Flask endpoint
-                   
-                   // console.log(id);
-                    res.send(response.data);
-                    
-                })
-                .catch(error => {
-                    // Handle the error
-                    res.send(error);
+        const today = new Date().toISOString().slice(0, 10);
+
+        Clas.findOne({ Name: classs }).then((found) => {
+        students.find({ ClassId: found.id }).then((students) => {
+            const storedEncodingsList = students.map((enc) => ({
+            id: enc.id,
+            encodings: enc.descriptor,
+            }));
+
+            // Check if attendance status for today has been created
+            Attendance_status.findOne({ createdAt: today }).then((existingStatus) => {
+            if (!existingStatus) {
+                // Create attendance status for all the students in the class for today
+                students.forEach((student) => {
+                Attendance_status.create({
+                    studId: student.id,
+                }).catch((err) => {
+                    console.log(err);
                 });
-            }).catch((error)=>{
-                res.send(error) 
+                });
+            }
+            });
+
+            // Now, you can use the storedEncodingsList to construct the request payload
+            const payload = {
+            buffer: buffer,
+            storedEncodings: storedEncodingsList,
+            };
+
+            axios
+            .post("http://localhost:7000/roll_call", payload, {
+                // headers: {
+                //     'Content-Type': 'image/jpeg'
+                // }
             })
-        }).catch((error)=>{
-            res.send(error)
-        })
+            .then((response) => {
+                const datas = response.data.present_encodings;
+
+                datas.forEach((e) => {
+                    Attendance_status.findOne({ studId: e.id, createdAt: today }).then((existingStatus) => {
+                        if (period === "First_period") {
+                        existingStatus.First_period = true;
+                        } else if (period === "Second_period") {
+                        existingStatus.Second_period = true;
+                        } else if (period === "Third_period") {
+                        existingStatus.Third_period = true;
+                        }
+
+                        existingStatus
+                        .save()
+                        .then((att) => {
+                            // Do not send the response here
+                        })
+                        .catch((err) => {
+                            console.log(err);
+                        });
+                    
+                    });
+                });
+
+                // Send the response after the loop
+                let responses = {
+                status: 200,
+                data: { Good: "Attendance succeeded" },
+                };
+
+                res.status(responses.status).send(responses.data);
+            })
+            .catch((error) => {
+                // Handle the error
+                res.send(error);
+            });
+        }).catch((error) => {
+            res.send(error);
+        });
+        }).catch((error) => {
+        res.send(error);
+        });
       console.log(storedEncodingsList);
 
     }catch{
@@ -196,14 +242,7 @@ router.post("/identify",upload.single('image'),async(req,res)=>{
 
 
 })
-async function sendrequest(classs,buffer){
-    const response =  axios.post('http://localhost:7000/compare', {"classs":classs,"buffer":buffer}, {
-        // headers: {
-        //     'Content-Type': 'image/jpeg'
-        // }
-        }
-      );
-}
+
 
 
 module.exports=router

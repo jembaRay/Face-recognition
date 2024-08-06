@@ -26,6 +26,6 @@ const ident_service=new mongoose.Schema({
         minlength:7,
         required:true
     }
-})
+},{timestamps:true})
 
 module.exports=mongoose.model('ident_service',ident_service)
