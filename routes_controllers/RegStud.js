@@ -5,7 +5,7 @@ const bcrypt=require('bcrypt');
 const Clas = require('../models/Clas');
 const canvas = require('canvas');
 const  axios = require('axios');
-const students = require('../models/students');
+const Students = require('../models/students');
 const multer = require('multer');
 const { GridFsStorage } = require('multer-gridfs-storage');
 const path = require('path');
@@ -13,6 +13,7 @@ const token=require('../Jwt/jwt');
 const { Console, log } = require('console');
 const Class = require('../models/Clas');
 const Attendance_status = require('../models/Attendance_status');
+const { enableDebugMode } = require('@tensorflow/tfjs');
 
 // // Configure multer-gridfs-storage
 // const storage = new GridFsStorage({
@@ -117,7 +118,7 @@ router.post('/Rollcall', upload.single('image'), async(req,res)=>{
         const today = new Date().toISOString().slice(0, 10);
         console.log(today);
         Clas.findOne({ Name: classs }).then((found) => {
-        students.find({ ClassId: found.id }).then((students) => {
+       Students.find({ ClassId: found.id }).then((students) => {
             const storedEncodingsList = students.map((enc) => ({
             id: enc.id,
             encodings: enc.descriptor,
@@ -154,33 +155,42 @@ router.post('/Rollcall', upload.single('image'), async(req,res)=>{
             .then((response) => {
                 const datas = response.data.present_encodings;
                 let responses = []
-                let resp
+                //console.log(response.data.present_encodings.id);
                 datas.forEach((e) => {
                     const todays = new Date().toISOString().slice(0, 10);
-                    //console.log(todays);
+                    console.log(e.id);
                     Attendance_status.findOne({ studId: e.id, date: todays }).then((existingStatus) => {
                         //console.log({"existingStatus":existingStatus});
                         if (period === "First_period") {
-                        existingStatus.First_period = true;
+                            Attendance_status.updateOne({ studId: e.id, date: todays },{$set:{First_period:true}},{ upsert: true }).then((att)=>{
+                                console.log(att);
+                            })
                         } else if (period === "Second_period") {
-                        existingStatus.Second_period = true;
+                            Attendance_status.updateOne({ studId: e.id, date: todays },{$set:{Second_period:true}},{ upsert: true }).then((att)=>{
+                                console.log(att);
+                            })
                         } else if (period === "Third_period") {
-                        existingStatus.Third_period = true;
+                            Attendance_status.updateOne({ studId: e.id, date: todays },{$set:{Third_period:true}},{ upsert: true }).then((att)=>{
+                                
+                            })
+                            let abs=0
+                            students.forEach( (ed)=>{
+                                Attendance_status.findOne({ studId: ed.id, date: todays }).then((st)=>{
+                                        if (st.First_period = false) {abs=abs+1 }
+                                        if (st.Second_period = false) {abs=abs+1 }                          
+                                        if (st.Third_period = false) {abs=abs+1 }   
+                                  Students.findByIdAndUpdate({id:ed.id},{$set:{absences:ed.absences+abs}},{ upsert: true })
+                                })
+                            })
                         }
 
-                        existingStatus
-                        .save()
-                        .then((att) => {
-                            //console.log(att);
-                            // Do not send the response here
-                             responses.push([att])
-                             resp=responses
-                            console.log(resp);
-                           
-                        })
-                        .catch((err) => {
-                            console.log(err);
-                        });
+                        // existingStatus.save().then((att) => {
+                        //    // console.log(att)                          // Do not send the response here
+                             
+                        // })
+                        // .catch((err) => {
+                        //     console.log(err);
+                        // });
                         
                         
                     });
