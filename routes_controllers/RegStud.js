@@ -173,13 +173,17 @@ router.post('/Rollcall', upload.single('image'), async(req,res)=>{
                             Attendance_status.updateOne({ studId: e.id, date: todays },{$set:{Third_period:true}},{ upsert: true }).then((att)=>{
                                 
                             })
-                            let abs=0
+                           
                             students.forEach( (ed)=>{
+                                let abs=0
                                 Attendance_status.findOne({ studId: ed.id, date: todays }).then((st)=>{
-                                        if (st.First_period = false) {abs=abs+1 }
-                                        if (st.Second_period = false) {abs=abs+1 }                          
-                                        if (st.Third_period = false) {abs=abs+1 }   
-                                  Students.findByIdAndUpdate({id:ed.id},{$set:{absences:ed.absences+abs}},{ upsert: true })
+                                        if (st.First_period == false) {abs=abs+2 }
+                                        if (st.Second_period == false) {abs=abs+2 }                          
+                                        if (st.Third_period == false) {abs=abs+2 }  
+                                        //console.log(abs); 
+                                  Students.findByIdAndUpdate(ed.id,{$set:{absences:ed.absences+abs}},{ upsert: true }). then((ott)=>{
+                                    //console.log({ott});
+                                  })
                                 })
                             })
                         }
@@ -229,7 +233,7 @@ router.post("/identify",upload.single('image'),async(req,res)=>{
     console.log("entered bitch");
     Class.findOne({Name:classs}).then((found)=>{
         //console.log(found);
-        students.find({ClassId:found.id}).then((stud)=>{
+        Students.find({ClassId:found.id}).then((stud)=>{
             //console.log(stud);
             const storedEncodingsList = stud.map(enc =>({ id:enc.id,encodings:enc.descriptor}));
             //console.log(storedEncodingsList);
@@ -246,7 +250,7 @@ router.post("/identify",upload.single('image'),async(req,res)=>{
             .then(response => {
                 // Handle the response from the Flask endpoint
                 //res.status(200).send(response.data[0].id);
-                students.findById(response.data[0].id).then((stud)=>{
+                Students.findById(response.data[0].id).then((stud)=>{
                     res.send(`the student present is ${stud.First_name} ${stud.Last_name}`)
                 }).catch((error)=>{
                             res.status(405).send(error)
@@ -258,8 +262,6 @@ router.post("/identify",upload.single('image'),async(req,res)=>{
     }).catch((error)=>{
         res.send(error)
     })
-
-
 })
 
 

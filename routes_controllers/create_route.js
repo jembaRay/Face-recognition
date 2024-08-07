@@ -11,23 +11,23 @@ const Personel = require('../models/Personel');
 const Roles = require('../models/Roles');
 const bcrypt=require('bcrypt')
 
-// Configure the GridFS storage
-const storage = new GridFsStorage({
-    url: process.env.MONGO_URI || 'mongodb://localhost:27017/your-database-name',
-    file: (req, file) => {
-      return new Promise((resolve, reject) => {
-        const filename = file.originalname;
-        const fileInfo = {
-          filename: filename,
-          bucketName: 'uploads'
-        };
-        resolve(fileInfo);
-      });
-    }
-  });
+// // Configure the GridFS storage
+// const storage = new GridFsStorage({
+//     url: process.env.MONGO_URI || 'mongodb://localhost:27017/facerecognition',
+//     file: (req, file) => {
+//       return new Promise((resolve, reject) => {
+//         const filename = file.originalname;
+//         const fileInfo = {
+//           filename: filename,
+//           bucketName: 'uploads'
+//         };
+//         resolve(fileInfo);
+//       });
+//     }
+//   });
   
   // Create the Multer upload instance
-  const upload = multer({ storage: storage });
+  const upload = multer({ storage: multer.memoryStorage() });
   
 
 //Create Notification for the whole class or onli one student
@@ -152,40 +152,36 @@ router.post('/createRole',(req,res)=>{
       res.status(200).send({role})
   })
 })
-
 // Define the /create_justif route
-router.post('/create_justif', upload.single('file'),async (req, res) => {
-  const file = req.file;
-      const { message} = req.body;
-      let tokene=req.headers.token
-      let  studId=await token.getUserId(tokene)
-    try {
-      //look for the student first
-       students.findById(studId).populate("ClassId").then((stud)=>{
-        // Create a new justification
-        Justi.create({
-        message,
-        PersoId:stud.ClassId.persoId,
-        studId,
-        file: {
-          id: file.id,
-          filename: file.filename,
-          contentType: file.contentType
-        }
-      })
-      .then(() => {
-        res.status(200).send({ message: 'justification and file sent successfully' });
-      })
-      .catch(error => {
-        console.error('Error creating justification:', error);
-        res.status(400).send({ error: 'Error creating justification' });
-      });
-       })
-    } catch (error) {
-      console.error('Error handling file upload:', error);
-      res.status(400).send({ error: 'Error handling file upload' });
-    }
-  });
+router.post('/create_justif', upload.single('file'), async (req, res) => {
+  try {
+    const file = req.file;
+    //console.log(file);
+    const { message } = req.body;
+    let tokene = req.headers.token;
+    let studId = token.getUserId(tokene);
+
+    // Look for the student first
+    const stud = await students.findById(studId).populate("ClassId");
+
+    // Create a new justification
+    const newJustification = await Justi.create({
+      message,
+      PersoId: stud.ClassId.persoId,
+      studId,
+      file: {
+        filename: file.originalname,
+        contentType: file.mimetype,
+        content:file.buffer
+      }
+    });
+    console.log(newJustification);
+    res.status(200).send({ message: 'Justification and file sent successfully' });
+  } catch (error) {
+    console.error('Error creating justification:', error);
+    res.status(400).send({ error: 'Error creating justification' });
+  }
+});
   //Create new identi_service
 
 

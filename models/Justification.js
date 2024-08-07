@@ -8,9 +8,13 @@ const justif=new mongo.Schema({
       required:true,
     },
   file: {
-    id: {
-      type: mongo.Schema.Types.ObjectId,
+    content: {
+      type: Buffer,
       required: true
+    },
+    uploadedAt: {
+      type: Date,
+      default: Date.now
     },
     filename: {
       type: String,
