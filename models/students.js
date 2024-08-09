@@ -34,7 +34,7 @@ const student=new mongo.Schema({
     },
     ClassId:{
         type:mongo.Types.ObjectId,
-        ref:'Class',
+        ref:'Clas',
         required:true
     },
     PersoId: {

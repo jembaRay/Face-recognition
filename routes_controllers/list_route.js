@@ -64,7 +64,8 @@ router.get('/list_all_justifications', (req, res) => {
   });
   // attendance for a particular student 
   router.get('/list_all_justifications_for_student', (req, res) => {
-    const studId=req.body.studId
+    const token=req.headers.token
+    const studId=req.body.studId?req.body.studId:jwt.getUserId(token)
     justi.find({
         studId
       })
@@ -76,7 +77,7 @@ router.get('/list_all_justifications', (req, res) => {
         res.status(400).send({ error });
       });
   })
-router.get('list_Attendance_status_for_student',(req,res)=>{
+router.get('/list_Attendance_status_for_student',(req,res)=>{
     const token=req.headers.token
     const userid=jwt.getUserId(token) 
     const date=req.body.date
@@ -108,48 +109,48 @@ if (date) {
     })
 }
 })
-router.get('list_Attendance_status_for_perso',(req,res)=>{
+router.get('/list_Attendance_status_for_perso',(req,res)=>{
     const token=req.headers.token
     const userid=jwt.getUserId(token) 
-    const date=req.body.date
+    const date=req.body.date ||new Date().toISOString().slice(0, 10);
     const classid=req.body.classid
     const target=new Date(date) 
 
-    if (classid==null||date==null) {
-        req.send('provide all data')
+    if (classid==null) {
+        res.send({'provide all data':''})
     }
 
 
 //attendance for students of a class for a particular day
     if (classid) {
-        Attendance_status.find({$and:[{'studId.ClassId.id':classid},
-            {createdAt:{
-                $gte:new Date(target.getFullYear(),target.getMonth(),target.getDate()),
-                $lt:new Date(target.getFullYear(),target.getMonth(),target.getDate()+1)
-                     }
-            }]}).populate('studId').populate('studId.ClassId').then((attendance)=>{
-                attendance.forEach((record) => {
-                    console.log(`Student: ${record.studId.name}`);
-                    console.log(`Class: ${record.studId.ClassId.name}`);
-                    console.log(`Attendance Status: ${record.status}`);
-                  });
+        Attendance_status.find({$and:[{ClassId:classid},
+            { date:date }
+            ]}).populate('ClassId').then((attendance)=>{
+                console.log();
+                // attendance.forEach((record) => {
+                //     console.log(`Student: ${record.studId.name}`);
+                //     console.log(`Class: ${record.studId.ClassId.name}`);
+                //     console.log(`Attendance Status: ${record.status}`);
+                //   });
                 res.status(200).send({attendance})
             }).catch((error)=>{
                 res.status(400).send({error})
             })
-    } else {
+     }
+// else {
         
-   //attendance for the whole days of a student
-    Attendance_status.find({studId:userid}).sort({createdAt:1}).then((attend)=>{
-        res.status(200).send({attend})
-    }).catch((error)=>{
-        res.status(400).send({error})
-    })
-    }
+//    //attendance for the whole days of a student
+//     Attendance_status.find({studId:userid}).sort({createdAt:1}).then((attend)=>{
+//         res.status(200).send({attend})
+//     }).catch((error)=>{
+//         res.status(400).send({error})
+//     })
+//     }
 })
 //all nitifications of a specific student
-router.get('/list_notif_for_all',(req,res)=>{
-const {studId,PersoId}=req.body
+router.get('/list_notif',(req,res)=>{
+    const token=req.headers.token
+    const studId=jwt.getUserId(token)
 //for student
 if (studId) {
     notif.find({studId}).then((note)=>{
@@ -159,17 +160,18 @@ if (studId) {
         res.status(400).send({error})
     })    
 }
+})
+
+router.get('/LIST_PERSO_NOTIIF',(req,res)=>{
+    const token=req.headers.token
+    const PersoId=jwt.getUserId(token)
 //for personel
-if (PersoId) {
-    notif.find({studId}).then((note)=>{
+
+    notif.find({PersoId}).then((note)=>{
         res.status(200).send({note})
     }).catch((error)=>{
         res.status(400).send({error})
     }) 
-}
-})
-
-router.get('',(req,res)=>{
 
 })
 router.get('',(req,res)=>{

@@ -2,9 +2,6 @@ const mongo=require("mongoose")
 const Personel = require("./Personel")
 
 const Notif=new mongo.Schema({
-    state:{
-
-    },
     message:{
         type:String,
         required:true,
@@ -21,3 +18,5 @@ const Notif=new mongo.Schema({
         ref:'students'
     }
 },{timestamp:true})
+
+module.exports=mongo.model("notifiaction",Notif)

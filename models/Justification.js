@@ -1,8 +1,13 @@
 const mongo=require('mongoose')
 const students = require('./students')
 const Personel = require('./Personel')
+const { type } = require('mocha/lib/utils')
 
 const justif=new mongo.Schema({
+    state:{
+      type:String,
+      default:"Pending"
+    },
     message:{
       type:String,
       required:true,

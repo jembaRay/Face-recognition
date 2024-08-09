@@ -132,6 +132,7 @@ router.post('/Rollcall', upload.single('image'), async(req,res)=>{
                 students.forEach((student) => {
                 Attendance_status.create({
                     studId: student.id,
+                    ClassId:student.ClassId,
                     date:today
                 }).catch((err) => {
                     console.log(err);
@@ -165,27 +166,18 @@ router.post('/Rollcall', upload.single('image'), async(req,res)=>{
                             Attendance_status.updateOne({ studId: e.id, date: todays },{$set:{First_period:true}},{ upsert: true }).then((att)=>{
                                 console.log(att);
                             })
+                            countAbs(students)
                         } else if (period === "Second_period") {
                             Attendance_status.updateOne({ studId: e.id, date: todays },{$set:{Second_period:true}},{ upsert: true }).then((att)=>{
                                 console.log(att);
                             })
+                            countAbs(students)
                         } else if (period === "Third_period") {
                             Attendance_status.updateOne({ studId: e.id, date: todays },{$set:{Third_period:true}},{ upsert: true }).then((att)=>{
                                 
                             })
-                           
-                            students.forEach( (ed)=>{
-                                let abs=0
-                                Attendance_status.findOne({ studId: ed.id, date: todays }).then((st)=>{
-                                        if (st.First_period == false) {abs=abs+2 }
-                                        if (st.Second_period == false) {abs=abs+2 }                          
-                                        if (st.Third_period == false) {abs=abs+2 }  
-                                        //console.log(abs); 
-                                  Students.findByIdAndUpdate(ed.id,{$set:{absences:ed.absences+abs}},{ upsert: true }). then((ott)=>{
-                                    //console.log({ott});
-                                  })
-                                })
-                            })
+                            countAbs(students)
+                            
                         }
 
                         // existingStatus.save().then((att) => {
@@ -264,7 +256,22 @@ router.post("/identify",upload.single('image'),async(req,res)=>{
     })
 })
 
-
+async function countAbs(student) {
+    student.forEach( (ed)=>{
+        let abs=0
+        Attendance_status.find({ studId: ed.id}).then((st)=>{
+            st.forEach((stt)=>{
+                if (st.First_period == false) {abs=abs+2 }
+                if (st.Second_period == false) {abs=abs+2 }                          
+                if (st.Third_period == false) {abs=abs+2 }  
+                //console.log(abs); 
+            })
+          Students.findByIdAndUpdate(ed.id,{$set:{absences:abs}},{ upsert: true }). then((ott)=>{
+            //console.log({ott});
+          })
+        })
+    })
+}
 
 module.exports=router
 

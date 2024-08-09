@@ -42,8 +42,8 @@ Router.post('/student', (req, res) => {
   
   
   Router.post('/attendance_status', (req, res) => {
-    const date = req.body.date;
-    const target = new Date(date);
+    const date=req.body.date ||new Date().toISOString().slice(0, 10);
+    
     const userId = jwt.getUserId(token);
     const classId = req.body.classId;
     const studentId = req.body.studentId;
@@ -63,10 +63,7 @@ Router.post('/student', (req, res) => {
     attend.updateOne(
       {
         id: studentId,
-        createdAt: {
-          $gte: new Date(target.getFullYear(), target.getMonth(), target.getDate()),
-          $lt: new Date(target.getFullYear(), target.getMonth(), target.getDate() + 1),
-        },
+        date: date
       },
       { $set: updates },
       { upsert: true }

@@ -15,9 +15,14 @@ const Attendance=new mong.Schema({
         default:false
     },
     studId:{
-        type:String,
+        type:mong.Types.ObjectId,
         required:true,
-        ref:'students' 
+        ref:'student' 
+    },
+    ClassId:{
+        type:mong.Types.ObjectId,
+        ref:'Class',
+        required:true
     },
     date:{
         type:'string',
