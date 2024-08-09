@@ -1,12 +1,16 @@
 const router=require('express').Router()
+const { logSigmoid, log } = require('@tensorflow/tfjs');
 const jwt = require('../Jwt/jwt');
+const Attendance = require('../models/Attendance_status');
 const Student=require('../models/students')
-jwt
+
 
 router.get(('/stats'),async (req,res)=>{
     let tokene = req.headers.token;
     let studId = jwt.getUserId(tokene);
+    console.log({studId})
   let  studenId=studId ? studId: req.body.studId
+  console.log({studenId})
 
  const stats= await getAttendanceStats(studenId)
 
@@ -25,6 +29,7 @@ async function getAttendanceStats(studentId) {
       let totalPeriodsPresent = 0;
       let totalPeriodsAbsent = 0;
       let totalDays = attendanceRecords.length;
+     
       let daysAbsent = 0;
   
       attendanceRecords.forEach((record) => {

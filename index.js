@@ -10,6 +10,7 @@ const create_route=require('./routes_controllers/create_route')
 const list_route=require('./routes_controllers/list_route')
 const Auth=require('./routes_controllers/Auth')
 const Update_route=require("./routes_controllers/Update_route")
+const stats=require('./routes_controllers/stats')
 
 app.use(bodyPars.urlencoded({extended:true}))
 app.use(bodyPars.json())
@@ -24,7 +25,7 @@ app.use(cors(
 mongo.connect('mongodb://localhost:27017/facerecognition').then(()=>{
     console.log("mongo connected")
 })
-
+app.use('/',stats)
 app.use('/',RegStud)
 app.use('/',create_route)
 app.use('/',Auth)
