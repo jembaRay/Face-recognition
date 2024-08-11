@@ -29,7 +29,6 @@ async function getAttendanceStats(studentId) {
       let totalPeriodsPresent = 0;
       let totalPeriodsAbsent = 0;
       let totalDays = attendanceRecords.length;
-     
       let daysAbsent = 0;
   
       attendanceRecords.forEach((record) => {
@@ -53,15 +52,23 @@ async function getAttendanceStats(studentId) {
   
         if (!record.First_period && !record.Second_period && !record.Third_period) {
           daysAbsent++;
+        }else if(!record.First_period && !record.Second_period && record.Third_period){
+            daysAbsent++;
+        }else if(!record.First_period && record.Second_period && !record.Third_period){
+            daysAbsent++;
+        }else if (record.First_period && !record.Second_period && !record.Third_period){
+            daysAbsent++;
         }
       });
   
       const percentageDaysAttended = ((totalDays - daysAbsent) / totalDays) * 100;
+      const percentageDaysAbsent = (daysAbsent / totalDays) * 100;
   
       return {
         totalPeriodsPresent,
         totalPeriodsAbsent,
         percentageDaysAttended: percentageDaysAttended.toFixed(2),
+        percentageDaysAbsent: percentageDaysAbsent.toFixed(2),
         daysAbsent
       };
     } catch (error) {
